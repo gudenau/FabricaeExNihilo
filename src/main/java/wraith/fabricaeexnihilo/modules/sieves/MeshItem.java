@@ -3,10 +3,13 @@ package wraith.fabricaeexnihilo.modules.sieves;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.BlockRenderView;
 import wraith.fabricaeexnihilo.FabricaeExNihilo;
 import wraith.fabricaeexnihilo.modules.base.IHasColor;
 import wraith.fabricaeexnihilo.util.Color;
@@ -33,6 +36,11 @@ public class MeshItem extends Item implements IHasColor {
     @Override
     public int getColor(int index) {
         return color.toInt();
+    }
+
+    @Override
+    public int getColor(BlockState state, BlockRenderView world, BlockPos pos, int tintIndex) {
+        return getColor(tintIndex);
     }
 
     @Override

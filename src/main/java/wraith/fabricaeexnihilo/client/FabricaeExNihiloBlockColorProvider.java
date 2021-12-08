@@ -15,8 +15,8 @@ public final class FabricaeExNihiloBlockColorProvider implements BlockColorProvi
     public static final FabricaeExNihiloBlockColorProvider INSTANCE = new FabricaeExNihiloBlockColorProvider();
 
     @Override
-    public int getColor(BlockState state, @Nullable BlockRenderView world, @Nullable BlockPos pos, int tintIndex) {
-        return state.getBlock() instanceof IHasColor colored ? colored.getColor(tintIndex) : Color.WHITE.toInt();
+    public int getColor(BlockState state, BlockRenderView world, BlockPos pos, int tintIndex) {
+        return state.getBlock() instanceof IHasColor colored ? colored.getColor(state, world, pos, tintIndex) : Color.WHITE.toInt();
     }
 
 }

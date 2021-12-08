@@ -9,13 +9,14 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.BlockRenderView;
 import wraith.fabricaeexnihilo.FabricaeExNihilo;
 import wraith.fabricaeexnihilo.modules.base.IHasColor;
 import wraith.fabricaeexnihilo.util.Color;
 
 import java.util.Random;
 
-public class InfestedLeavesBlock extends LeavesBlock implements IHasColor {
+public class InfestedLeavesBlock extends LeavesBlock implements IHasColor, NonInfestableLeavesBlock {
     private final LeavesBlock leafBlock;
 
     public InfestedLeavesBlock(LeavesBlock leafBlock, FabricBlockSettings settings) {
@@ -26,6 +27,11 @@ public class InfestedLeavesBlock extends LeavesBlock implements IHasColor {
     @Override
     public int getColor(int index) {
         return Color.WHITE.toInt();
+    }
+
+    @Override
+    public int getColor(BlockState state, BlockRenderView world, BlockPos pos, int tintIndex) {
+        return getColor(tintIndex);
     }
 
     public LeavesBlock getLeafBlock() {

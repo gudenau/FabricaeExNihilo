@@ -21,6 +21,11 @@ public interface IBlockGenerator {
     void createInfestedLeavesBlock(LeavesBlock block);
 
     /**
+     * Generated Identifier = exnihilofabric:infesting_<blockID.namespace>_<blockID.path>
+     */
+    void createInfestingLeavesBlock(LeavesBlock block);
+
+    /**
      * plankID and slabID are used to generate a crafting recipe
      * Default assumption is the texture shares a name with the planks and is under modid:block
      *

@@ -10,6 +10,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.BlockRenderView;
 import net.minecraft.world.World;
 import wraith.fabricaeexnihilo.FabricaeExNihilo;
 import wraith.fabricaeexnihilo.modules.ModBlocks;
@@ -19,7 +20,7 @@ import wraith.fabricaeexnihilo.util.Color;
 
 public class InfestingLeavesBlockEntity extends BaseBlockEntity implements BlockEntityClientSerializable, IHasColor {
 
-    private InfestedLeavesBlock infestedBlock = ModBlocks.INFESTED_LEAVES.values().stream().findFirst().get();
+    private InfestedLeavesBlock infestedBlock;
     private double progress = 0.0;
 
     private int tickCounter;
@@ -27,27 +28,32 @@ public class InfestingLeavesBlockEntity extends BaseBlockEntity implements Block
     public static Identifier BLOCK_ENTITY_ID = FabricaeExNihilo.ID("infesting");
     public static final BlockEntityType<InfestingLeavesBlockEntity> TYPE = FabricBlockEntityTypeBuilder.create(
             InfestingLeavesBlockEntity::new,
-            new InfestingLeavesBlock[]{ModBlocks.INFESTING_LEAVES}
+            ModBlocks.INFESTING_LEAVES.values().toArray(new InfestingLeavesBlock[0])
     ).build(null);
+
     public InfestingLeavesBlockEntity(BlockPos pos, BlockState state) {
         super(TYPE, pos, state);
         tickCounter = world == null ? 0 : world.random.nextInt(FabricaeExNihilo.CONFIG.modules.barrels.tickRate);
     }
 
     public static void ticker(World world, BlockPos blockPos, BlockState blockState, InfestingLeavesBlockEntity infestedLeavesEntity) {
+        infestedLeavesEntity.tick(world, blockPos, blockState);
+    }
+
+    public void tick(World world, BlockPos blockPos, BlockState blockState) {
         // Don't update every single tick
-        infestedLeavesEntity.tickCounter += 1;
-        if(infestedLeavesEntity.tickCounter < FabricaeExNihilo.CONFIG.modules.silkworms.updateFrequency) {
+        tickCounter += 1;
+        if (tickCounter < FabricaeExNihilo.CONFIG.modules.silkworms.updateFrequency) {
             return;
         }
-        infestedLeavesEntity.tickCounter = 0;
+        tickCounter = 0;
 
         // Advance
-        infestedLeavesEntity.progress += FabricaeExNihilo.CONFIG.modules.silkworms.progressPerUpdate;
+        progress += FabricaeExNihilo.CONFIG.modules.silkworms.progressPerUpdate;
 
-        if(infestedLeavesEntity.progress < 1f) {
-            infestedLeavesEntity.markDirty();
-            if(infestedLeavesEntity.progress > FabricaeExNihilo.CONFIG.modules.silkworms.minimumSpreadPercent && world != null) {
+        if (progress < 1f) {
+            markDirty();
+            if (progress > FabricaeExNihilo.CONFIG.modules.silkworms.minimumSpreadPercent && world != null) {
                 InfestedHelper.tryToSpreadFrom(world, blockPos, FabricaeExNihilo.CONFIG.modules.silkworms.infestingSpreadAttempts);
             }
             return;
@@ -58,7 +64,7 @@ public class InfestingLeavesBlockEntity extends BaseBlockEntity implements Block
             return;
         }
         var curState = world.getBlockState(blockPos);
-        var newState = infestedLeavesEntity.infestedBlock.getDefaultState()
+        var newState = infestedBlock.getDefaultState()
                 .with(LeavesBlock.DISTANCE, curState.get(LeavesBlock.DISTANCE))
                 .with(LeavesBlock.PERSISTENT, curState.get(LeavesBlock.PERSISTENT));
         world.setBlockState(blockPos, newState);
@@ -67,7 +73,7 @@ public class InfestingLeavesBlockEntity extends BaseBlockEntity implements Block
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        if(nbt==null){
+        if (nbt == null) {
             FabricaeExNihilo.LOGGER.warn("An infesting leaves block at " + pos + " is missing data.");
             return;
         }
@@ -96,9 +102,13 @@ public class InfestingLeavesBlockEntity extends BaseBlockEntity implements Block
     }
 
     public void readNbtWithoutWorldInfo(NbtCompound nbt) {
-        infestedBlock = (InfestedLeavesBlock)Registry.BLOCK.getOrEmpty(new Identifier(nbt.getString("block"))).orElse(
-                ModBlocks.INFESTED_LEAVES.values().stream().findFirst().get()
-        );
+        infestedBlock = (InfestedLeavesBlock) Registry.BLOCK
+                .getOrEmpty(new Identifier(nbt.getString("block")))
+                .orElse(ModBlocks.INFESTED_LEAVES
+                        .values()
+                        .stream()
+                        .findFirst()
+                        .get());
         progress = nbt.getDouble("progress");
     }
 
@@ -112,8 +122,17 @@ public class InfestingLeavesBlockEntity extends BaseBlockEntity implements Block
 
     @Override
     public int getColor(int index) {
-        var originalColor = MinecraftClient.getInstance().getBlockColors().getColor(infestedBlock.getLeafBlock().getDefaultState(), world, pos, 0);
+        return getColor(infestedBlock.getLeafBlock().getDefaultState(), world, pos, index);
+    }
+
+    @Override
+    public int getColor(BlockState state, BlockRenderView world, BlockPos pos, int tintIndex) {
+        var originalColor = MinecraftClient.getInstance().getBlockColors().getColor(infestedBlock.getLeafBlock().getDefaultState(), world, pos, tintIndex);
         return Color.average(Color.WHITE, new Color(originalColor), progress).toInt();
+    }
+
+    public double getProgress() {
+        return this.progress;
     }
 
 }

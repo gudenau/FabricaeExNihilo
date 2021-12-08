@@ -99,7 +99,7 @@ public class SieveBlockEntity extends BaseBlockEntity implements BlockEntityClie
         }
 
         // Add a block
-        if (!held.isEmpty() && SIEVE.isValidRecipe(mesh, getFluid(), held)) {
+        if (!held.isEmpty() && !mesh.isEmpty() && SIEVE.isValidRecipe(mesh, getFluid(), held)) {
             ItemStack finalHeld = held;
             sieves.forEach(sieve -> sieve.setContents(finalHeld, !player.isCreative()));
             return ActionResult.SUCCESS;
@@ -196,14 +196,15 @@ public class SieveBlockEntity extends BaseBlockEntity implements BlockEntityClie
                 // Add adjacent locations to test to the stack
                 Arrays.stream(Direction.values())
                         // Horizontals
-                        .filter(dir -> dir.getOffsetY() == 0)
+                        .filter(dir -> dir.getAxis().isHorizontal())
                         // to BlockPos
                         .map(popped::offset)
                         // Remove already tested positions
-                        .filter(dir -> !tested.contains(dir) && !stack.contains(dir))
+                        .filter(pos -> !tested.contains(pos) && !stack.contains(pos))
                         // Remove positions too far away
-                        .filter(dir -> Math.abs(this.pos.getX()) - dir.getX() <= FabricaeExNihilo.CONFIG.modules.sieves.sieveRadius &&
-                                Math.abs(this.pos.getZ()) - dir.getZ() <= FabricaeExNihilo.CONFIG.modules.sieves.sieveRadius)
+                        .filter(pos ->
+                                Math.abs(this.pos.getX() - pos.getX()) <= FabricaeExNihilo.CONFIG.modules.sieves.sieveRadius &&
+                                Math.abs(this.pos.getZ() - pos.getZ()) <= FabricaeExNihilo.CONFIG.modules.sieves.sieveRadius)
                         // Add to the stack to be processed
                         .forEach(stack::add);
             }

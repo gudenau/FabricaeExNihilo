@@ -1,10 +1,12 @@
 package wraith.fabricaeexnihilo.modules.infested;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import wraith.fabricaeexnihilo.FabricaeExNihilo;
 import wraith.fabricaeexnihilo.modules.ModBlocks;
@@ -18,14 +20,24 @@ public final class InfestedHelper {
     public static final HashMap<Block, InfestedLeavesBlock> LEAF_TO_INFESTED = new HashMap<>();
 
     public static ActionResult tryToInfest(World world, BlockPos pos) {
-        if (world.isClient) {
+        if (world.isClient()) {
             return ActionResult.PASS;
         }
         var originalState = world.getBlockState(pos);
         if (!LEAF_TO_INFESTED.containsKey(originalState.getBlock())) {
             return ActionResult.PASS;
         }
-        var newState = ModBlocks.INFESTING_LEAVES.getDefaultState()
+        var oldBlockId = Registry.BLOCK.getId(originalState.getBlock());
+        BlockState newState = null;
+        for (var infesting : ModBlocks.INFESTING_LEAVES.entrySet()) {
+            if (infesting.getKey().getPath().substring("infesting_".length()).equals(oldBlockId.getPath())) {
+                newState = infesting.getValue().getDefaultState();
+            }
+        }
+        if (newState == null) {
+            return ActionResult.PASS;
+        }
+        newState = newState
                 .with(LeavesBlock.DISTANCE, originalState.get(LeavesBlock.DISTANCE))
                 .with(LeavesBlock.PERSISTENT, originalState.get(LeavesBlock.PERSISTENT));
         var infestedBlock = getInfestedLeavesBlock(originalState.getBlock());

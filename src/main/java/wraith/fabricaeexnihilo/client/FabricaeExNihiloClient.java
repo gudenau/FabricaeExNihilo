@@ -16,12 +16,11 @@ import wraith.fabricaeexnihilo.FabricaeExNihilo;
 import wraith.fabricaeexnihilo.api.registry.FabricaeExNihiloRegistries;
 import wraith.fabricaeexnihilo.client.renderers.BarrelBlockEntityRenderer;
 import wraith.fabricaeexnihilo.client.renderers.CrucibleBlockEntityRenderer;
-import wraith.fabricaeexnihilo.client.renderers.InfestingLeavesBlockEntityRenderer;
 import wraith.fabricaeexnihilo.client.renderers.SieveBlockEntityRenderer;
 import wraith.fabricaeexnihilo.modules.ModBlocks;
 import wraith.fabricaeexnihilo.modules.barrels.BarrelBlockEntity;
 import wraith.fabricaeexnihilo.modules.crucibles.CrucibleBlockEntity;
-import wraith.fabricaeexnihilo.modules.infested.InfestingLeavesBlockEntity;
+import wraith.fabricaeexnihilo.modules.infested.InfestingLeavesBlock;
 import wraith.fabricaeexnihilo.modules.sieves.SieveBlockEntity;
 
 import java.nio.file.Path;
@@ -39,7 +38,7 @@ public class FabricaeExNihiloClient implements ClientModInitializer {
         BlockEntityRendererRegistry.register(SieveBlockEntity.TYPE, SieveBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(CrucibleBlockEntity.TYPE, CrucibleBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(BarrelBlockEntity.TYPE, BarrelBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(InfestingLeavesBlockEntity.TYPE, InfestingLeavesBlockEntityRenderer::new);
+
         FabricaeExNihilo.LOGGER.info("Registered BESR for Sieve");
 
         // Item Colors
@@ -51,6 +50,9 @@ public class FabricaeExNihiloClient implements ClientModInitializer {
         ModBlocks.INFESTED_LEAVES.forEach((identifier, leaves) -> {
             ColorProviderRegistry.ITEM.register(FabricaeExNihiloItemColorProvider.INSTANCE, leaves.asItem());
             ColorProviderRegistry.BLOCK.register(FabricaeExNihiloBlockColorProvider.INSTANCE, leaves);
+        });
+        ModBlocks.INFESTING_LEAVES.forEach((identifier, leaves) -> {
+            ColorProviderRegistry.BLOCK.register(InfestingLeavesBlock::getColorStatic, leaves);
         });
         FabricaeExNihilo.LOGGER.info("Registered ItemColorProviders and BlockColorProviders");
         ModBlocks.SIEVES.forEach((identifier, sieve) -> BlockRenderLayerMap.INSTANCE.putBlock(sieve, RenderLayer.getCutout()));
@@ -85,6 +87,13 @@ public class FabricaeExNihiloClient implements ClientModInitializer {
             var root = Registry.BLOCK.getId(infestedLeaves.getLeafBlock());
             resourcePack.addModel(JModel.modelKeepElements(root.getNamespace() + ":block/" + root.getPath()), ID("block/" + identifier.getPath()));
             resourcePack.addModel(JModel.modelKeepElements(ID("block/" + identifier.getPath())), ID("item/" + identifier.getPath()));
+            resourcePack.addBlockState(JState.state(JState.variant(JState.model(ID("block/" + identifier.getPath())))), identifier);
+        });
+        // Infesting Leaves models
+        ModBlocks.INFESTING_LEAVES.forEach((identifier, infestingLeaves) -> {
+            var originalIdentifier = infestingLeaves.getOriginalIdentifier();
+            var originalTexture = originalIdentifier.getNamespace() + ":block/" + originalIdentifier.getPath();
+            resourcePack.addModel(JModel.modelKeepElements(ID("block/infesting_leaves")).textures(JModel.textures().var("all", originalTexture)), ID("block/" + identifier.getPath()));
             resourcePack.addBlockState(JState.state(JState.variant(JState.model(ID("block/" + identifier.getPath())))), identifier);
         });
         // Ore Chunks/Pieces

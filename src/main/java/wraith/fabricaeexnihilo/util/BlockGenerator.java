@@ -13,6 +13,8 @@ import wraith.fabricaeexnihilo.modules.ModBlocks;
 import wraith.fabricaeexnihilo.modules.barrels.BarrelBlock;
 import wraith.fabricaeexnihilo.modules.crucibles.CrucibleBlock;
 import wraith.fabricaeexnihilo.modules.infested.InfestedLeavesBlock;
+import wraith.fabricaeexnihilo.modules.infested.InfestingLeavesBlock;
+import wraith.fabricaeexnihilo.modules.infested.NonInfestableLeavesBlock;
 import wraith.fabricaeexnihilo.modules.sieves.SieveBlock;
 
 import java.util.HashSet;
@@ -29,14 +31,27 @@ public class BlockGenerator implements IBlockGenerator {
         MOD_BLACKLIST.add(modid);
     }
 
+    public Identifier createIdentifier(String prefix, Identifier originalIdentifier) {
+        return !originalIdentifier.getNamespace().equals("minecraft")
+                ? FabricaeExNihilo.ID(prefix + "_" + originalIdentifier.getNamespace() + "_" + originalIdentifier.getPath())
+                : FabricaeExNihilo.ID(prefix + "_" + originalIdentifier.getPath());
+    }
+
     @Override
     public void createInfestedLeavesBlock(LeavesBlock block) {
         if (FabricaeExNihilo.CONFIG.modules.silkworms.enabled) {
+            registerBlockAndItem(new InfestedLeavesBlock(block, ModBlocks.INFESTED_LEAVES_SETTINGS), createIdentifier("infested", Registry.BLOCK.getId(block)));
+        }
+    }
+
+    @Override
+    public void createInfestingLeavesBlock(LeavesBlock block) {
+        if (FabricaeExNihilo.CONFIG.modules.silkworms.enabled) {
             var originalIdentifier = Registry.BLOCK.getId(block);
-            var infestedIdentifier = !originalIdentifier.getNamespace().equals("minecraft")
-                    ? FabricaeExNihilo.ID("infested_" + originalIdentifier.getNamespace() + "_" + originalIdentifier.getPath())
-                    : FabricaeExNihilo.ID("infested_" + originalIdentifier.getPath());
-            registerBlockAndItem(new InfestedLeavesBlock(block, ModBlocks.INFESTED_LEAVES_SETTINGS), infestedIdentifier);
+            var infestingLeavesBlock = new InfestingLeavesBlock(originalIdentifier, ModBlocks.INFESTED_LEAVES_SETTINGS);
+            var identifier = createIdentifier("infesting", originalIdentifier);
+            Registry.register(Registry.BLOCK, identifier, infestingLeavesBlock);
+            ModBlocks.INFESTING_LEAVES.put(identifier, infestingLeavesBlock);
         }
     }
 
@@ -102,8 +117,9 @@ public class BlockGenerator implements IBlockGenerator {
         ) {
             createWoodCrucibleBlock(identifier);
         }
-        else if(block instanceof LeavesBlock leavesBlock && !(block instanceof InfestedLeavesBlock)) {
+        else if(block instanceof LeavesBlock leavesBlock && !(block instanceof NonInfestableLeavesBlock)) {
             createInfestedLeavesBlock(leavesBlock);
+            createInfestingLeavesBlock(leavesBlock);
         }
     }
 
